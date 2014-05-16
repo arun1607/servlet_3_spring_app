@@ -4,10 +4,12 @@ import java.io.File;
 
 import javax.servlet.ServletException;
 
+import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Service;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.naming.resources.VirtualDirContext;
 
 public class ServerLauncher {
 	public static void main(final String[] args) throws ServletException, LifecycleException {
@@ -27,9 +29,12 @@ public class ServerLauncher {
 
 		tomcat.setPort(Integer.valueOf(webPort));
 
-		tomcat.addWebapp("/app", new File(webappDirLocation).getAbsolutePath());
+		Context context = tomcat.addWebapp("/app", new File(webappDirLocation).getAbsolutePath());
 		System.out.println("configuring app with basedir: " + new File("./" + webappDirLocation).getAbsolutePath());
-
+		File additionWebInfClasses = new File("target/classes");
+		VirtualDirContext resources = new VirtualDirContext();
+		resources.setExtraResourcePaths("/WEB-INF/classes=" + additionWebInfClasses);
+		context.setResources(resources);
 		Connector httpsConnector = new Connector();
 		httpsConnector.setPort(8443);
 		httpsConnector.setSecure(true);
