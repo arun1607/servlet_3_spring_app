@@ -10,11 +10,17 @@ import org.springframework.security.config.annotation.web.servlet.configuration.
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-		auth.inMemoryAuthentication().withUser("user").password("password").roles("USER");
+		auth.inMemoryAuthentication().withUser("mkyong").password("123456").roles("USER");
+		auth.inMemoryAuthentication().withUser("admin").password("123456").roles("ADMIN");
+		auth.inMemoryAuthentication().withUser("dba").password("123456").roles("DBA");
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().anyRequest().authenticated().and().formLogin().and().httpBasic().and().rememberMe().and().logout();
+
+		http.authorizeRequests().antMatchers("/admin/**").access("hasRole('ROLE_ADMIN')").antMatchers("/dba/**")
+				.access("hasRole('ROLE_ADMIN') or hasRole('ROLE_DBA')").and().formLogin();
+
 	}
+
 }

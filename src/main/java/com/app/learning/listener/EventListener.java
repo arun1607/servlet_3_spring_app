@@ -5,7 +5,9 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.core.session.SessionCreationEvent;
 import org.springframework.security.core.session.SessionDestroyedEvent;
+import org.springframework.stereotype.Component;
 
+@Component
 public class EventListener implements ApplicationListener<ApplicationEvent> {
 
 	private static final Logger LOGGER = Logger.getLogger(EventListener.class);
