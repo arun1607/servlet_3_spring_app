@@ -1,54 +1,41 @@
 package com.app.learning.execution;
 
-import java.io.File;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.WebResourceRoot;
+import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.webresources.DirResourceSet;
+import org.apache.catalina.webresources.StandardRoot;
 
 import javax.servlet.ServletException;
-
-import org.apache.catalina.Context;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.Service;
-import org.apache.catalina.connector.Connector;
-import org.apache.catalina.startup.Tomcat;
-import org.apache.naming.resources.VirtualDirContext;
+import java.io.File;
 
 public class ServerLauncher {
-	public static void main(final String[] args) throws ServletException, LifecycleException {
-		String webappDirLocation = "src/main/webapp/";
-		Tomcat tomcat = new Tomcat();
-		String userHome = System.getProperty("user.home");
+    public static void main(final String[] args) throws ServletException, LifecycleException {
+        String webappDirLocation = "src/main/webapp/";
+        Tomcat tomcat = new Tomcat();
+        // The port that we should run on can be set into an environment
+        // variable
+        // Look for that variable and default to 8080 if it isn't there.
+        String webPort = System.getenv("PORT");
+        if (webPort == null || webPort.isEmpty()) {
+            webPort = "8084";
+        }
 
-		String keyStorePath = new File(userHome, "ssl_cert/keystore.jks").getAbsolutePath();
+        tomcat.setPort(Integer.valueOf(webPort));
 
-		// The port that we should run on can be set into an environment
-		// variable
-		// Look for that variable and default to 8080 if it isn't there.
-		String webPort = System.getenv("PORT");
-		if (webPort == null || webPort.isEmpty()) {
-			webPort = "8084";
-		}
+        StandardContext ctx = (StandardContext) tomcat.addWebapp("/app", new File(webappDirLocation).getAbsolutePath());
+        System.out.println("configuring app with basedir: " + new File("./" + webappDirLocation).getAbsolutePath());
 
-		tomcat.setPort(Integer.valueOf(webPort));
+        // Declare an alternative location for your "WEB-INF/classes" dir
+        // Servlet 3.0 annotation will work
+        File additionWebInfClasses = new File("target/classes");
+        WebResourceRoot resources = new StandardRoot(ctx);
+        resources.addPreResources(new DirResourceSet(resources, "/WEB-INF/classes",
+                additionWebInfClasses.getAbsolutePath(), "/"));
+        ctx.setResources(resources);
 
-		Context context = tomcat.addWebapp("/app", new File(webappDirLocation).getAbsolutePath());
-		System.out.println("configuring app with basedir: " + new File("./" + webappDirLocation).getAbsolutePath());
-		File additionWebInfClasses = new File("target/classes");
-		VirtualDirContext resources = new VirtualDirContext();
-		resources.setExtraResourcePaths("/WEB-INF/classes=" + additionWebInfClasses);
-		context.setResources(resources);
-		Connector httpsConnector = new Connector();
-		httpsConnector.setPort(8443);
-		httpsConnector.setSecure(true);
-		httpsConnector.setScheme("https");
-		httpsConnector.setAttribute("keyAlias", "myapp");
-		httpsConnector.setAttribute("keystorePass", "app123");
-		httpsConnector.setAttribute("keystoreFile", keyStorePath);
-		httpsConnector.setAttribute("clientAuth", "false");
-		httpsConnector.setAttribute("sslProtocol", "TLS");
-		httpsConnector.setAttribute("SSLEnabled", true);
-		Service service = tomcat.getService();
-		service.addConnector(httpsConnector);
-
-		tomcat.start();
-		tomcat.getServer().await();
-	}
+        tomcat.start();
+        tomcat.getServer().await();
+    }
 }
